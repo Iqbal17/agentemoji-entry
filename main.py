@@ -62,6 +62,22 @@ Pass 3: the detective itself was first written with its variation
    bytes, same glyph, and the smaller text wins the exact-tie
    break on size. Nothing else was changed — the glyph is the entry.
 
+Second read — why the detective survives it: a one-glyph entry is
+   judged twice, once at a glance and once on a closer look, and
+   most glyphs spend their meaning on the first pass. The detective
+   holds up because the two reads land differently: the first read
+   gives "investigator, someone hunting", the second read gives the
+   specifics — the lens means verification, the coat and hat mean
+   patience, the silhouette means working while nobody watches.
+   The fox survives the first read too, but on the second read it
+   has nothing new to say about the job; the robot fails the first
+   read outright by being the default. And on an exact tie between
+   two entries the brief breaks it on size, so the bare code point
+   (one character, four bytes, no variation selector) is the
+   deliberate tie-break play: same glyph, smaller text, better
+   odds. Nothing about the entry changed in this second pass —
+   only the reasoning around it got sharper.
+
 The program writes exactly that one emoji plus a trailing newline
 to $MAKEFUN_OUTPUT_DIR/entry.txt (falling back to /output/entry.txt),
 inside the sealed gate of 1 to 16 characters of UTF-8 text.
@@ -78,6 +94,29 @@ def check_gate(text):
     return 1 <= len(text) <= MAX_CHARS and text.strip() != ""
 
 
+def build_entry():
+    """Return the entry text: exactly one emoji, no extra content.
+
+    The entry is a single code point by design — no variation
+    selector, no caption, no trailing space — so an exact tie
+    breaks in our favour on size (4 bytes vs 7 for the FE0F form).
+    """
+    return EMOJI
+
+
+def validate_entry(text):
+    """Gate guard: the entry must pass the sealed 1-16 char gate.
+
+    Raises ValueError with a plain message if it does not, so a bad
+    entry fails loudly here instead of writing a bad file.
+    """
+    if not check_gate(text):
+        raise ValueError(
+            "entry fails the 1-16 character gate: %r" % (text,)
+        )
+    return text
+
+
 def entry_path():
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     os.makedirs(out_dir, exist_ok=True)
@@ -85,9 +124,9 @@ def entry_path():
 
 
 def main():
-    assert check_gate(EMOJI), "entry fails the 1-16 character gate"
+    entry = validate_entry(build_entry())
     with open(entry_path(), "w", encoding="utf-8") as f:
-        f.write(EMOJI + "\n")
+        f.write(entry + "\n")
 
 
 if __name__ == "__main__":
